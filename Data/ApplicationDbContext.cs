@@ -51,7 +51,7 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.Timestamp);
             entity.HasIndex(e => e.Action);
-            entity.Property(e => e.Timestamp).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.Timestamp).HasDefaultValueSql("now()");
         });
 
         // Configure User entity
@@ -61,7 +61,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Email).IsRequired();
             entity.Property(e => e.Role).HasDefaultValue("customer");
             entity.Property(e => e.Status).HasDefaultValue("pending");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
         });
 
         // Configure Product entity
@@ -73,7 +73,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Category).IsRequired();
             entity.Property(e => e.InStock).HasDefaultValue(true);
             entity.Property(e => e.Featured).HasDefaultValue(false);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
             entity.Property(e => e.Images).HasDefaultValue("[]");
         });
 
@@ -83,7 +83,7 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => new { e.UserId, e.ProductId }).IsUnique();
             entity.HasIndex(e => e.UserId);
             entity.HasIndex(e => e.ProductId);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
 
             // Link ProductId (string slug) to Product.Id (unique principal key)
             entity.HasOne(w => w.Product)

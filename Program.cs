@@ -10,12 +10,12 @@ using SAFuneralSuppliesAPI.Seeders;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure SQL Server connection
+// Configure database connection (Postgres / Supabase)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? throw new InvalidOperationException("SQL Server connection string not configured");
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not configured");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseNpgsql(connectionString));
 
 // Configure JWT settings
 var jwtSettings = new JwtSettings
