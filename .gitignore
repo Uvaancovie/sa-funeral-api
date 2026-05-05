@@ -55,3 +55,48 @@ bld/
 
 # Publishing
 publish/
+
+# Node
+node_modules/
+
+# Tooling/agent folders
+.adal/
+.agents/
+.augment/
+.bob/
+.claude/
+.codebuddy/
+.commandcode/
+.continue/
+.cortex/
+.crush/
+.factory/
+.goose/
+.iflow/
+.junie/
+.kilo/
+.kilocode/
+.kiro/
+.kode/
+.mcpjam/
+.mux/
+.neovate/
+.openhands/
+.pi/
+.pochi/
+.qoder/
+.qwen/
+.roo/
+.trae/
+.vibe/
+.windsurf/
+.zencoder/
+
+# Tool configs
+.mcp.json
+
+# Temp working dirs
+tmpclaude-*-cwd
+
+# Windows special file
+nul

@@ -62,6 +62,68 @@ public class ProductSeeder
                         images.Add(relativePath);
                     }
                 }
+                else if (productJson.Id.StartsWith("ricardo-"))
+                {
+                    // Ricardo products: images are in shared "Ricardo Caskets" or "Ricardo Equipment" folders
+                    // Derive the folder and search prefix from the image path in JSON
+                    var imagePath = productJson.Image;
+                    var imageDir = Path.GetDirectoryName(imagePath)?.Replace("assets/", "") ?? "";
+                    var ricardoFolder = Path.Combine(assetsPath, imageDir);
+
+                    if (Directory.Exists(ricardoFolder))
+                    {
+                        // Get the primary image filename without extension to derive the base name
+                        var primaryFileName = Path.GetFileNameWithoutExtension(imagePath);
+
+                        // Build search prefix by removing trailing color/variant/state words
+                        var suffixWords = new[] { "closed", "open", "kiaat", "white", "cherry", "teak",
+                            "walnut", "mahogany", "pecan", "rose", "ash", "black", "brown", "green",
+                            "hemlock", "red", "gold", "2", "3", "4" };
+                        var searchPrefix = primaryFileName;
+
+                        // Iteratively strip trailing words that are color/variant/state descriptors
+                        var changed = true;
+                        while (changed)
+                        {
+                            changed = false;
+                            var trimmed = searchPrefix.TrimEnd();
+                            foreach (var suffix in suffixWords)
+                            {
+                                if (trimmed.EndsWith(" " + suffix, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    searchPrefix = trimmed.Substring(0, trimmed.Length - suffix.Length - 1).TrimEnd();
+                                    changed = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Find all files that start with the derived base name
+                        var imageFiles = Directory.GetFiles(ricardoFolder, "*.jpg")
+                            .Concat(Directory.GetFiles(ricardoFolder, "*.png"))
+                            .Concat(Directory.GetFiles(ricardoFolder, "*.jpeg"))
+                            .Where(f =>
+                            {
+                                var fn = Path.GetFileNameWithoutExtension(f);
+                                return fn.StartsWith(searchPrefix, StringComparison.OrdinalIgnoreCase)
+                                    && !fn.EndsWith(" - Copy", StringComparison.OrdinalIgnoreCase);
+                            })
+                            .OrderBy(f => f)
+                            .ToList();
+
+                        foreach (var imgFile in imageFiles)
+                        {
+                            var relativePath = $"assets/{imageDir}/{Path.GetFileName(imgFile)}";
+                            images.Add(relativePath);
+                        }
+                    }
+
+                    // Fallback: if no matches found, use the image from JSON
+                    if (!images.Any())
+                    {
+                        images.Add(productJson.Image);
+                    }
+                }
                 else
                 {
                     // Fallback to the single image from JSON
@@ -118,7 +180,7 @@ public class ProductSeeder
     private static string? CreateColorVariations(List<string> variants, List<string> images)
     {
         // Only create color variations if we have actual color names in variants
-        var colorKeywords = new[] { "cherry", "teak", "kiaat", "walnut", "white", "ash", "black", "brown", "green", "hemlock", "oak", "mahogany", "pine" };
+        var colorKeywords = new[] { "cherry", "teak", "kiaat", "walnut", "white", "ash", "black", "brown", "green", "hemlock", "oak", "mahogany", "pine", "pecan", "red", "gold" };
         var colorVariants = variants
             .Where(v => colorKeywords.Any(k => v.ToLower().Contains(k)))
             .ToList();

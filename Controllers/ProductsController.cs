@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SAFuneralSuppliesAPI.Attributes;
 using SAFuneralSuppliesAPI.Data;
+using SAFuneralSuppliesAPI.DTOs;
 using SAFuneralSuppliesAPI.Models;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -125,6 +126,49 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
+    /// Get all products marked for expo display
+    /// </summary>
+    [HttpGet("expo")]
+    [SwaggerOperation(
+        Summary = "Get expo featured products",
+        Description = "Get all products marked for expo/kiosk display (public endpoint)",
+        Tags = new[] { "Products" }
+    )]
+    [SwaggerResponse(200, "Expo products retrieved successfully", typeof(List<ProductExpoDisplayDto>))]
+    [SwaggerResponse(500, "Server error")]
+    public async Task<IActionResult> GetExpoProducts()
+    {
+        try
+        {
+            // First, fetch the products from database
+            var dbProducts = await _context.Products
+                .Where(p => p.ExpoFeatured && p.InStock)
+                .OrderBy(p => p.Name)
+                .ToListAsync();
+
+            // Then, transform to DTO in memory (to allow JSON deserializing)
+            var expoProducts = dbProducts.Select(p => new ProductExpoDisplayDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Category = p.Category,
+                Description = p.Description,
+                Price = p.Price,
+                PriceOnRequest = p.PriceOnRequest,
+                Images = System.Text.Json.JsonSerializer.Deserialize<List<string>>(p.Images) ?? new List<string>(),
+                ColorVariations = string.IsNullOrEmpty(p.ColorVariations) ? null :
+                    System.Text.Json.JsonSerializer.Deserialize<List<ColorVariationDto>>(p.ColorVariations)
+            }).ToList();
+
+            return Ok(expoProducts);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = "Failed to fetch expo products", details = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Create a new product (Admin only)
     /// </summary>
     [HttpPost]
@@ -221,6 +265,7 @@ public class ProductsController : ControllerBase
             existingProduct.ColorVariations = updates.ColorVariations;
             existingProduct.InStock = updates.InStock;
             existingProduct.Featured = updates.Featured;
+            existingProduct.ExpoFeatured = updates.ExpoFeatured;
             existingProduct.UpdatedAt = DateTime.UtcNow;
             
             if (changes.Count > 0)

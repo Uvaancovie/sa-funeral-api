@@ -27,9 +27,18 @@ var jwtSettings = new JwtSettings
     ExpirationDays = int.Parse(builder.Configuration["Jwt:ExpirationDays"] ?? "7")
 };
 
+var brevoSettings = new BrevoSettings
+{
+    ApiKey = builder.Configuration["Brevo:ApiKey"] ?? string.Empty,
+    SenderEmail = builder.Configuration["Brevo:SenderEmail"] ?? string.Empty,
+    SenderName = builder.Configuration["Brevo:SenderName"] ?? string.Empty
+};
+
 // Add services to container
 builder.Services.AddSingleton(jwtSettings);
+builder.Services.AddSingleton(brevoSettings);
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddHttpClient<BrevoEmailService>();
 
 // Add authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -15,6 +15,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<ProductAuditLog> ProductAuditLogs { get; set; }
     public DbSet<Wishlist> Wishlists { get; set; }
+    public DbSet<Order> Orders { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -73,6 +74,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Category).IsRequired();
             entity.Property(e => e.InStock).HasDefaultValue(true);
             entity.Property(e => e.Featured).HasDefaultValue(false);
+            entity.Property(e => e.ExpoFeatured).HasDefaultValue(false);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
             entity.Property(e => e.Images).HasDefaultValue("[]");
         });
@@ -91,6 +93,17 @@ public class ApplicationDbContext : DbContext
                 .HasForeignKey(w => w.ProductId)
                 .HasPrincipalKey(p => p.Id)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // Configure Order entity
+        modelBuilder.Entity<Order>(entity =>
+        {
+            entity.HasIndex(e => e.CustomerId);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.Property(e => e.Status).HasDefaultValue("pending");
+            entity.Property(e => e.Items).HasDefaultValue("[]");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
         });
 
         // Seed default admin user

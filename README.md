@@ -1,250 +1,80 @@
-# SA Funeral Supplies .NET API
+# SA Funeral Supplies E-Commerce System
 
-A modern ASP.NET Core Web API for the SA Funeral Supplies product catalog and administration system. This API replaces the previous Vercel serverless functions with a full-featured .NET 8 backend.
+A modern full-stack e-commerce platform for wholesale funeral supplies.
 
-## Features
+## Tech Stack Overview
 
-- **Product Management**: Full CRUD operations for products with filtering and search
-- **Authentication**: JWT-based authentication with bcrypt password hashing
-- **Admin Portal**: Customer management and approval workflow
-- **MongoDB Integration**: Native MongoDB driver with async/await support
-- **CORS Support**: Configured for Angular frontend integration
-- **Swagger UI**: Interactive API documentation at root URL
-- **Role-Based Authorization**: Admin-only endpoints protected with custom attributes
+### Backend (.NET 8 Web API)
 
-## Prerequisites
+- **Framework:** ASP.NET Core Web API (.NET 8)
+- **Database:** PostgreSQL (hosted on Supabase)
+- **ORM:** Entity Framework Core
+- **Authentication:** JWT Bearer tokens with Role-based Auth (Admin/Customer)
+- **Key Features:** Product Catalog CRUD, Order Management, Customer Approval Workflow, Audit Logging, Wishlists.
 
-- .NET 8.0 SDK or later
-- MongoDB instance (local or cloud)
-- Visual Studio 2022, VS Code, or Rider (optional)
+### Frontend (Angular 18)
+
+- **Framework:** Angular 18 (Standalone Components, Signals)
+- **Styling:** Tailwind CSS + Vanilla CSS (`index.css`)
+- **State Management:** Angular Signals + Services
+- **Routing:** Angular Router with Auth/Admin Guards
+- **Key Features:** Dynamic Catalog Filtering (Category/Style/Finish/Collection), Cart System, Print/PDF Generation for Quotes/Invoices.
+
+---
+
+## Core Systems & Context (For Developers/LLMs)
+
+### 1. Database Schema (Entity Framework)
+
+The backend uses EF Core connected to a Supabase PostgreSQL instance.
+
+- `Products`: Base catalog items. Images, Color Variations, and Features are stored as JSON arrays in text columns.
+- `Orders`: Stores all orders. Order items (line items) are denormalized and stored directly inside the `Order.Items` column as a JSON array (`[{ productId, productName, variant, quantity }]`). Uses `camelCase` JSON normalization on both front and backend.
+- `Users`: Handles auth. Customers require Admin approval (`status="approved"`) before placing orders.
+- `Wishlists`: User-product mapping.
+- `AuditLogs` / `ProductAuditLogs`: Tracks admin actions and product changes.
+
+### 2. Angular Architecture
+
+- **State:** Minimal RxJS; heavy reliance on Angular 16+ Signals (`computed()`, `signal()`).
+- **Services:** E.g., `StoreService` (Cart state), `AuthService` (JWT/localStorage), `OrdersService` (API integration).
+- **Style guide:** Dark mode aesthetics (`bg-safs-dark` `#1a103c`) combined with Gold accents (`text-safs-gold` `#a89f6e`). Design prioritizes professional, luxury wholesale b2b feel.
+
+### 3. Orders & Quoting Workflow
+
+1. Unauthenticated users can use the Cart to generate a PDF Quote (handled locally via window.print) or use an email template.
+2. Authenticated `approved` customers can **Place Order**, generating a real order in the DB with status `pending`.
+3. Customers view their history at `/orders`, which includes PDF generation.
+4. Admins manage all orders at `/admin/orders`, moving statuses through `pending` -> `confirmed` -> `processing` -> `fulfilled`.
+
+### 4. Catalog Filtering
+
+The `/catalog` page uses heavy local filtering (via Signals) of a cached API response. Products are filtered down by:
+
+- Category (Casket, Equipment, etc.)
+- Style (Dome, Halfview, Coffin, etc.)
+- Finish/Color (Cherry, Mahogany, Pecan, etc.)
+- Collection (e.g., 2026 Collection flag for new imports)
+
+### 5. Known Gotchas
+
+- **JSON Serialization:** EF Core text columns holding JSON. The C# model uses custom getters/setters or direct serialization. Ensure C# uses `JsonNamingPolicy.CamelCase` so the Angular frontend (`parseItems()`, `parseColorVariations()`) doesn't fail on casing discrepancies.
+- **Tailwind:** Processed via Angular builder. Global styles in `styles.css` / `index.css`.
+- **Migrations:** Since the DB is on Supabase, `dotnet ef` CLI might occasionally fail if SSL strictness causes design-time errors. In such cases, run direct SQL via script (e.g., `create-orders-table.js`).
+
+---
 
 ## Getting Started
 
-### 1. Clone and Navigate
+### Backend Setup
 
-```bash
-cd SAFuneralSuppliesAPI
-```
+1. In `sa-funeral-api/`, ensure `appsettings.json` has the correct `Supabase:ConnectionString` and `Jwt:Secret`.
+2. Run `dotnet restore`
+3. Run `dotnet run` (Starts API on `http://localhost:5038` and `https://localhost:7084`)
 
-### 2. Configure Environment Variables
+### Frontend Setup
 
-Create a `.env` file in the project root:
-
-```env
-MONGODB_URI=your_mongodb_connection_string_here
-JWT_SECRET=your_jwt_secret_key_here_at_least_32_characters_long
-```
-
-Or configure in `appsettings.json`:
-
-```json
-{
-  "MongoDB": {
-    "ConnectionString": "mongodb://localhost:27017",
-    "DatabaseName": "safs-product-catalog"
-  },
-  "Jwt": {
-    "Secret": "your-secret-key-at-least-32-characters-long-for-production",
-    "Issuer": "SAFuneralSuppliesAPI",
-    "Audience": "SAFuneralSuppliesApp",
-    "ExpirationDays": 7
-  }
-}
-```
-
-### 3. Restore Dependencies
-
-```bash
-dotnet restore
-```
-
-### 4. Run the Application
-
-```bash
-dotnet run
-```
-
-The API will start at:
-- HTTP: `http://localhost:5000`
-- HTTPS: `https://localhost:5001`
-- Swagger UI: `https://localhost:5001`
-
-### 5. Default Admin Account
-
-On first run, a default admin account is automatically created:
-
-- **Email**: `admin@safuneralsupplies.co.za`
-- **Password**: `Admin123!`
-
-**⚠️ IMPORTANT**: Change this password immediately after first login!
-
-## API Endpoints
-
-### Authentication
-
-- `POST /api/auth/login` - Login with email and password
-- `POST /api/auth/register` - Disabled (returns 410)
-
-### Products
-
-- `GET /api/products` - Get all products (with optional `category` and `search` query params)
-- `GET /api/products/{id}` - Get a single product
-- `POST /api/products` - Create a product (Admin only)
-- `PUT /api/products/{id}` - Update a product (Admin only)
-- `DELETE /api/products/{id}` - Delete a product (Admin only)
-
-### Admin - Customers
-
-- `GET /api/admin/customers` - List all customers (Admin only)
-- `POST /api/admin/customers` - Create a customer (Admin only)
-- `PATCH /api/admin/customers/{id}` - Update customer status (Admin only)
-
-## Authentication
-
-The API uses JWT Bearer tokens. To authenticate:
-
-1. Call `POST /api/auth/login` with email and password
-2. Receive a JWT token in the response
-3. Include the token in subsequent requests:
-   ```
-   Authorization: Bearer <your-token-here>
-   ```
-
-## Project Structure
-
-```
-SAFuneralSuppliesAPI/
-├── Controllers/          # API endpoints
-│   ├── AuthController.cs
-│   ├── ProductsController.cs
-│   └── CustomersController.cs
-├── Models/              # Data models
-│   ├── User.cs
-│   └── Product.cs
-├── DTOs/                # Data transfer objects
-│   ├── AuthDTOs.cs
-│   └── CustomerDTOs.cs
-├── Services/            # Business logic
-│   ├── MongoDbService.cs
-│   └── JwtService.cs
-├── Attributes/          # Custom attributes
-│   └── AdminOnlyAttribute.cs
-├── Extensions/          # Extensions
-│   └── ClaimsPrincipalExtensions.cs
-├── Configuration/       # Configuration classes
-│   └── AppSettings.cs
-└── Program.cs          # Application entry point
-```
-
-## Development
-
-### Build
-
-```bash
-dotnet build
-```
-
-### Run with watch (auto-reload)
-
-```bash
-dotnet watch run
-```
-
-### Run tests (if added)
-
-```bash
-dotnet test
-```
-
-## Deployment
-
-### Production Configuration
-
-1. Set production environment variables:
-   - `MONGODB_URI`: Your production MongoDB connection string
-   - `JWT_SECRET`: Strong secret key (32+ characters)
-
-2. Build for production:
-   ```bash
-   dotnet publish -c Release -o ./publish
-   ```
-
-3. Deploy the `./publish` folder to your hosting provider
-
-### Hosting Options
-
-- **Azure App Service**: Native .NET hosting with easy deployment
-- **Docker**: Use the included Dockerfile (if created)
-- **IIS**: Traditional Windows hosting
-- **Linux**: With Nginx reverse proxy
-
-## Update Frontend Configuration
-
-After running the .NET API, update your Angular application to use the new backend:
-
-In your Angular `environment.ts`:
-
-```typescript
-export const environment = {
-  production: false,
-  apiUrl: 'https://localhost:5001/api'  // or your deployed URL
-};
-```
-
-## Migration from Vercel
-
-This .NET API is a drop-in replacement for the Vercel serverless functions:
-
-| Vercel                        | .NET API                          |
-|-------------------------------|-----------------------------------|
-| `/api/auth/login`             | `/api/auth/login`                 |
-| `/api/products`               | `/api/products`                   |
-| `/api/products/[id]`          | `/api/products/{id}`              |
-| `/api/admin/customers`        | `/api/admin/customers`            |
-| `/api/admin/customers/[id]`   | `/api/admin/customers/{id}`       |
-
-All request/response formats remain the same for seamless migration.
-
-## Security Notes
-
-- JWT tokens expire in 7 days (configurable)
-- Passwords are hashed using BCrypt
-- Admin endpoints protected with `[AdminOnly]` attribute
-- CORS configured for localhost development (update for production)
-- Default admin credentials must be changed
-
-## Troubleshooting
-
-### MongoDB Connection Issues
-
-- Verify MongoDB is running
-- Check connection string format
-- Ensure IP whitelist includes your server (for cloud MongoDB)
-
-### JWT Authentication Issues
-
-- Ensure JWT_SECRET is at least 32 characters
-- Check token expiration
-- Verify Authorization header format: `Bearer <token>`
-
-### CORS Issues
-
-Update the CORS policy in `Program.cs` to include your frontend URL:
-
-```csharp
-options.AddPolicy("AllowAll", policy =>
-{
-    policy.WithOrigins("https://yourdomain.com")
-          .AllowAnyMethod()
-          .AllowAnyHeader();
-});
-```
-
-## License
-
-Proprietary - SA Funeral Supplies
-
-## Support
-
-For issues or questions, contact the development team.
-#
+1. `cd sa-funerals-catalog`
+2. `npm install`
+3. `ng serve` or `npm run dev` (Starts Angular dev server on `http://localhost:4200`)
+*(Note: A proxy is configured in Angular so `/api/*` proxies to the .NET backend during dev).*

@@ -41,6 +41,8 @@ public class Product
 
     public bool Featured { get; set; }
 
+    public bool ExpoFeatured { get; set; } = false;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }
