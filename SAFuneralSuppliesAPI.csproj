@@ -21,4 +21,15 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="tests\**" />
+    <None Remove="tests\**" />
+    <Compile Remove="Tests\**" />
+    <None Remove="Tests\**" />
+    <Content Remove="tests\**" />
+    <Content Remove="Tests\**" />
+    <AdditionalFiles Remove="tests\**" />
+    <AdditionalFiles Remove="Tests\**" />
+  </ItemGroup>
+
 </Project>

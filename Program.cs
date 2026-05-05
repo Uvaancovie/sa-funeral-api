@@ -249,3 +249,5 @@ Console.WriteLine("   Password: Admin123!");
 Console.WriteLine("========================================\n");
 
 app.Run();
+
+public partial class Program { }

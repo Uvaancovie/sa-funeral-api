@@ -100,3 +100,10 @@ tmpclaude-*-cwd
 
 # Windows special file
 nul
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
