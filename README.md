@@ -1,80 +1,177 @@
-# SA Funeral Supplies E-Commerce System
+# Supabase CLI
 
-A modern full-stack e-commerce platform for wholesale funeral supplies.
+[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=develop)](https://coveralls.io/github/supabase/cli?branch=develop) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
+](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
 
-## Tech Stack Overview
+[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
 
-### Backend (.NET 8 Web API)
+This repository contains all the functionality for Supabase CLI.
 
-- **Framework:** ASP.NET Core Web API (.NET 8)
-- **Database:** PostgreSQL (hosted on Supabase)
-- **ORM:** Entity Framework Core
-- **Authentication:** JWT Bearer tokens with Role-based Auth (Admin/Customer)
-- **Key Features:** Product Catalog CRUD, Order Management, Customer Approval Workflow, Audit Logging, Wishlists.
+- [x] Running Supabase locally
+- [x] Managing database migrations
+- [x] Creating and deploying Supabase Functions
+- [x] Generating types directly from your database schema
+- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
 
-### Frontend (Angular 18)
+## Getting started
 
-- **Framework:** Angular 18 (Standalone Components, Signals)
-- **Styling:** Tailwind CSS + Vanilla CSS (`index.css`)
-- **State Management:** Angular Signals + Services
-- **Routing:** Angular Router with Auth/Admin Guards
-- **Key Features:** Dynamic Catalog Filtering (Category/Style/Finish/Collection), Cart System, Print/PDF Generation for Quotes/Invoices.
+### Install the CLI
 
----
+Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
 
-## Core Systems & Context (For Developers/LLMs)
+```bash
+npm i supabase --save-dev
+```
 
-### 1. Database Schema (Entity Framework)
+When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
 
-The backend uses EF Core connected to a Supabase PostgreSQL instance.
+```
+NODE_OPTIONS=--no-experimental-fetch yarn add supabase
+```
 
-- `Products`: Base catalog items. Images, Color Variations, and Features are stored as JSON arrays in text columns.
-- `Orders`: Stores all orders. Order items (line items) are denormalized and stored directly inside the `Order.Items` column as a JSON array (`[{ productId, productName, variant, quantity }]`). Uses `camelCase` JSON normalization on both front and backend.
-- `Users`: Handles auth. Customers require Admin approval (`status="approved"`) before placing orders.
-- `Wishlists`: User-product mapping.
-- `AuditLogs` / `ProductAuditLogs`: Tracks admin actions and product changes.
+> **Note**
+For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
 
-### 2. Angular Architecture
+<details>
+  <summary><b>macOS</b></summary>
 
-- **State:** Minimal RxJS; heavy reliance on Angular 16+ Signals (`computed()`, `signal()`).
-- **Services:** E.g., `StoreService` (Cart state), `AuthService` (JWT/localStorage), `OrdersService` (API integration).
-- **Style guide:** Dark mode aesthetics (`bg-safs-dark` `#1a103c`) combined with Gold accents (`text-safs-gold` `#a89f6e`). Design prioritizes professional, luxury wholesale b2b feel.
+  Available via [Homebrew](https://brew.sh). To install:
 
-### 3. Orders & Quoting Workflow
+  ```sh
+  brew install supabase/tap/supabase
+  ```
 
-1. Unauthenticated users can use the Cart to generate a PDF Quote (handled locally via window.print) or use an email template.
-2. Authenticated `approved` customers can **Place Order**, generating a real order in the DB with status `pending`.
-3. Customers view their history at `/orders`, which includes PDF generation.
-4. Admins manage all orders at `/admin/orders`, moving statuses through `pending` -> `confirmed` -> `processing` -> `fulfilled`.
+  To install the beta release channel:
+  
+  ```sh
+  brew install supabase/tap/supabase-beta
+  brew link --overwrite supabase-beta
+  ```
+  
+  To upgrade:
 
-### 4. Catalog Filtering
+  ```sh
+  brew upgrade supabase
+  ```
+</details>
 
-The `/catalog` page uses heavy local filtering (via Signals) of a cached API response. Products are filtered down by:
+<details>
+  <summary><b>Windows</b></summary>
 
-- Category (Casket, Equipment, etc.)
-- Style (Dome, Halfview, Coffin, etc.)
-- Finish/Color (Cherry, Mahogany, Pecan, etc.)
-- Collection (e.g., 2026 Collection flag for new imports)
+  Available via [Scoop](https://scoop.sh). To install:
 
-### 5. Known Gotchas
+  ```powershell
+  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+  scoop install supabase
+  ```
 
-- **JSON Serialization:** EF Core text columns holding JSON. The C# model uses custom getters/setters or direct serialization. Ensure C# uses `JsonNamingPolicy.CamelCase` so the Angular frontend (`parseItems()`, `parseColorVariations()`) doesn't fail on casing discrepancies.
-- **Tailwind:** Processed via Angular builder. Global styles in `styles.css` / `index.css`.
-- **Migrations:** Since the DB is on Supabase, `dotnet ef` CLI might occasionally fail if SSL strictness causes design-time errors. In such cases, run direct SQL via script (e.g., `create-orders-table.js`).
+  To upgrade:
 
----
+  ```powershell
+  scoop update supabase
+  ```
+</details>
 
-## Getting Started
+<details>
+  <summary><b>Linux</b></summary>
 
-### Backend Setup
+  Available via [Homebrew](https://brew.sh) and Linux packages.
 
-1. In `sa-funeral-api/`, ensure `appsettings.json` has the correct `Supabase:ConnectionString` and `Jwt:Secret`.
-2. Run `dotnet restore`
-3. Run `dotnet run` (Starts API on `http://localhost:5038` and `https://localhost:7084`)
+  #### via Homebrew
 
-### Frontend Setup
+  To install:
 
-1. `cd sa-funerals-catalog`
-2. `npm install`
-3. `ng serve` or `npm run dev` (Starts Angular dev server on `http://localhost:4200`)
-*(Note: A proxy is configured in Angular so `/api/*` proxies to the .NET backend during dev).*
+  ```sh
+  brew install supabase/tap/supabase
+  ```
+
+  To upgrade:
+
+  ```sh
+  brew upgrade supabase
+  ```
+
+  #### via Linux packages
+
+  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
+
+  ```sh
+  sudo apk add --allow-untrusted <...>.apk
+  ```
+
+  ```sh
+  sudo dpkg -i <...>.deb
+  ```
+
+  ```sh
+  sudo rpm -i <...>.rpm
+  ```
+
+  ```sh
+  sudo pacman -U <...>.pkg.tar.zst
+  ```
+</details>
+
+<details>
+  <summary><b>Other Platforms</b></summary>
+
+  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
+
+  ```sh
+  go install github.com/supabase/cli@latest
+  ```
+
+  Add a symlink to the binary in `$PATH` for easier access:
+
+  ```sh
+  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
+  ```
+
+  This works on other non-standard Linux distros.
+</details>
+
+<details>
+  <summary><b>Community Maintained Packages</b></summary>
+
+  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
+  To install in your working directory:
+
+  ```bash
+  pkgx install supabase
+  ```
+
+  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
+</details>
+
+### Run the CLI
+
+```bash
+supabase bootstrap
+```
+
+Or using npx:
+
+```bash
+npx supabase bootstrap
+```
+
+The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+
+## Docs
+
+Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+
+## Breaking changes
+
+We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+
+However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+
+## Developing
+
+To run from source:
+
+```sh
+# Go >= 1.22
+go run . help
+```
