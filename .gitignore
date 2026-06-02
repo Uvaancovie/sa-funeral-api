@@ -107,3 +107,23 @@ nul
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Project junk / working files
+about-page/
+aerial-view/
+company-profile/
+
+# Installed agent skills (non-project)
+skills/brandkit/
+skills/design-taste-frontend/
+skills/design-taste-frontend-v1/
+skills/full-output-enforcement/
+skills/gpt-taste/
+skills/high-end-visual-design/
+skills/image-to-code/
+skills/imagegen-frontend-mobile/
+skills/imagegen-frontend-web/
+skills/industrial-brutalist-ui/
+skills/minimalist-ui/
+skills/redesign-existing-projects/
+skills/stitch-design-taste/
